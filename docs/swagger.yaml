@@ -1,0 +1,2909 @@
+openapi: 3.0.0
+info:
+  title: LLM Pipeline API
+  description: |
+    A comprehensive API for managing Machine Learning entities, including Models, Benchmarks, Datasets, Training Jobs, Evaluations, and Inferences.
+    This API provides a standardized way to interact with and manage the lifecycle of your ML assets.
+  contact:
+    name: Developer Email
+    email: giovanni.oliveira@turing.com
+  version: 1.0.0
+servers:
+- url: https://virtserver.swaggerhub.com/turing-f7b/PipEvals/1.0.0
+  description: SwaggerHub API Auto Mocking
+- url: https://virtserver.swaggerhub.com/turing-f7b/MLLib/1.0.0
+  description: SwaggerHub API Auto Mocking
+paths:
+  /oauth2/token:
+    post:
+      tags:
+      - Authentication
+      summary: Obtain an OAuth2 access token
+      description: This endpoint is used to exchange credentials (like an authorization
+        code or client credentials) for an access token.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/oauth2_token_body"
+        required: true
+      responses:
+        "200":
+          description: Access token granted successfully.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/inline_response_200"
+        "400":
+          description: "Bad request, often due to invalid grant type or missing parameters."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+  /models:
+    get:
+      tags:
+      - Model
+      summary: Retrieve all models
+      operationId: getAllModels
+      parameters:
+      - name: page
+        in: query
+        description: The page number to retrieve.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+          example: 1
+      - name: perPage
+        in: query
+        description: The number of items per page.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+          example: 10
+      responses:
+        "200":
+          description: A paginated list of models
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedModels"
+        "401":
+          description: The client must authenticate itself to get the requested response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                Unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: You need to authenticate first.
+        "403":
+          description: No permission to access resource for a given action.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                AccessDenied:
+                  summary: Access Denied Error
+                  value:
+                    code: FORBIDDEN
+                    message: You do not have permission to access this resource.
+        "500":
+          description: "Service unavailable. Please, try again later."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                InternalServerError:
+                  summary: Service unavailable.
+                  value:
+                    code: SERVICE UNAVAILABLE
+                    message: "Service unavailable. Please, try again later."
+      security:
+      - BearerAuth:
+        - Model:retrieve
+    post:
+      tags:
+      - Admin
+      summary: Create a new model
+      operationId: createModel
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Model"
+            examples:
+              CreateModelExample:
+                $ref: "#/components/examples/CreateModelExample"
+        required: true
+      responses:
+        "201":
+          description: Model created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Model"
+        "400":
+          description: The server cannot or will not process the request due to something
+            that is perceived to be a client error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                InvalidArgument:
+                  summary: Invalid Argument Error
+                  value:
+                    code: INVALID_ARGUMENT
+                    message: The 'location' field is required to be valid.
+                    details:
+                    - field: location
+                      issue: Must be a valid URI to GCS (gs://location/id) or a Hugging
+                        Face model ID (mistralai/Mistral-7B-v0.1).
+        "401":
+          description: The client must authenticate itself to get the requested response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                Unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: You need to authenticate first.
+        "403":
+          description: No permission to access resource for a given action.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                AccessDenied:
+                  summary: Access Denied Error
+                  value:
+                    code: FORBIDDEN
+                    message: You do not have permission to access this resource.
+        "500":
+          description: "Service unavailable. Please, try again later."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                InternalServerError:
+                  summary: Service unavailable.
+                  value:
+                    code: SERVICE UNAVAILABLE
+                    message: "Service unavailable. Please, try again later."
+      security:
+      - BearerAuth:
+        - Model:create
+  /models/{id}:
+    get:
+      tags:
+      - Model
+      summary: Retrieve a model by ID
+      operationId: getModelById
+      parameters:
+      - name: id
+        in: path
+        description: The unique identifier of the resource.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+      responses:
+        "200":
+          description: A single model
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Model"
+        "401":
+          description: The client must authenticate itself to get the requested response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                Unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: You need to authenticate first.
+        "403":
+          description: No permission to access resource for a given action.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                AccessDenied:
+                  summary: Access Denied Error
+                  value:
+                    code: FORBIDDEN
+                    message: You do not have permission to access this resource.
+        "404":
+          description: The server can not find the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                AccessDenied:
+                  summary: Access Denied Error
+                  value:
+                    code: NOT FOUND
+                    message: I couldn't retrieve the specified `id`."
+        "500":
+          description: "Service unavailable. Please, try again later."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                InternalServerError:
+                  summary: Service unavailable.
+                  value:
+                    code: SERVICE UNAVAILABLE
+                    message: "Service unavailable. Please, try again later."
+      security:
+      - BearerAuth:
+        - Model:retrieve
+    delete:
+      tags:
+      - Admin
+      summary: Soft-delete a model by ID
+      operationId: deleteModel
+      parameters:
+      - name: id
+        in: path
+        description: The unique identifier of the resource.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+      responses:
+        "204":
+          description: Model deleted successfully
+        "401":
+          description: The client must authenticate itself to get the requested response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                Unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: You need to authenticate first.
+        "403":
+          description: No permission to access resource for a given action.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                AccessDenied:
+                  summary: Access Denied Error
+                  value:
+                    code: FORBIDDEN
+                    message: You do not have permission to access this resource.
+        "404":
+          description: The server can not find the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                AccessDenied:
+                  summary: Access Denied Error
+                  value:
+                    code: NOT FOUND
+                    message: I couldn't retrieve the specified `id`."
+        "500":
+          description: "Service unavailable. Please, try again later."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                InternalServerError:
+                  summary: Service unavailable.
+                  value:
+                    code: SERVICE UNAVAILABLE
+                    message: "Service unavailable. Please, try again later."
+      security:
+      - BearerAuth:
+        - Model:delete
+    patch:
+      tags:
+      - Admin
+      summary: Update a model by ID
+      operationId: updateModel
+      parameters:
+      - name: id
+        in: path
+        description: The unique identifier of the resource.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Model"
+        required: true
+      responses:
+        "200":
+          description: Model updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Model"
+        "400":
+          description: The server cannot or will not process the request due to something
+            that is perceived to be a client error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                InvalidArgument:
+                  summary: Invalid Argument Error
+                  value:
+                    code: INVALID_ARGUMENT
+                    message: The 'location' field is required to be valid.
+                    details:
+                    - field: location
+                      issue: Must be a valid URI to GCS (gs://location/id) or a Hugging
+                        Face model ID (mistralai/Mistral-7B-v0.1).
+        "401":
+          description: The client must authenticate itself to get the requested response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                Unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: You need to authenticate first.
+        "403":
+          description: No permission to access resource for a given action.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                AccessDenied:
+                  summary: Access Denied Error
+                  value:
+                    code: FORBIDDEN
+                    message: You do not have permission to access this resource.
+        "404":
+          description: The server can not find the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                AccessDenied:
+                  summary: Access Denied Error
+                  value:
+                    code: NOT FOUND
+                    message: I couldn't retrieve the specified `id`."
+        "500":
+          description: "Service unavailable. Please, try again later."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                InternalServerError:
+                  summary: Service unavailable.
+                  value:
+                    code: SERVICE UNAVAILABLE
+                    message: "Service unavailable. Please, try again later."
+      security:
+      - BearerAuth:
+        - Model:update
+  /benchmarks:
+    get:
+      tags:
+      - Benchmark
+      summary: Retrieve all benchmarks
+      operationId: getAllBenchmarks
+      parameters:
+      - name: page
+        in: query
+        description: The page number to retrieve.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+          example: 1
+      - name: perPage
+        in: query
+        description: The number of items per page.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+          example: 10
+      responses:
+        "200":
+          description: A paginated list of benchmarks
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedBenchmarks"
+        "401":
+          description: The client must authenticate itself to get the requested response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                Unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: You need to authenticate first.
+        "403":
+          description: No permission to access resource for a given action.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                AccessDenied:
+                  summary: Access Denied Error
+                  value:
+                    code: FORBIDDEN
+                    message: You do not have permission to access this resource.
+        "500":
+          description: "Service unavailable. Please, try again later."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                InternalServerError:
+                  summary: Service unavailable.
+                  value:
+                    code: SERVICE UNAVAILABLE
+                    message: "Service unavailable. Please, try again later."
+      security:
+      - BearerAuth:
+        - Benchmark:retrieve
+    post:
+      tags:
+      - Admin
+      summary: Create a new benchmark
+      operationId: createBenchmark
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Benchmark"
+            examples:
+              CreateBenchmarkExample:
+                $ref: "#/components/examples/CreateBenchmarkExample"
+        required: true
+      responses:
+        "201":
+          description: Benchmark created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Benchmark"
+        "400":
+          description: The server cannot or will not process the request due to something
+            that is perceived to be a client error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                InvalidArgument:
+                  summary: Invalid Argument Error
+                  value:
+                    code: INVALID_ARGUMENT
+                    message: The 'location' field is required to be valid.
+                    details:
+                    - field: location
+                      issue: Must be a valid URI to GCS (gs://location/id) or a Hugging
+                        Face model ID (mistralai/Mistral-7B-v0.1).
+        "401":
+          description: The client must authenticate itself to get the requested response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                Unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: You need to authenticate first.
+        "403":
+          description: No permission to access resource for a given action.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                AccessDenied:
+                  summary: Access Denied Error
+                  value:
+                    code: FORBIDDEN
+                    message: You do not have permission to access this resource.
+        "500":
+          description: "Service unavailable. Please, try again later."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                InternalServerError:
+                  summary: Service unavailable.
+                  value:
+                    code: SERVICE UNAVAILABLE
+                    message: "Service unavailable. Please, try again later."
+      security:
+      - BearerAuth:
+        - Benchmark:create
+  /benchmarks/{id}:
+    get:
+      tags:
+      - Benchmark
+      summary: Retrieve a benchmark by ID
+      operationId: getBenchmarkById
+      parameters:
+      - name: id
+        in: path
+        description: The unique identifier of the resource.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+      responses:
+        "200":
+          description: A single benchmark
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Benchmark"
+        "401":
+          description: The client must authenticate itself to get the requested response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                Unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: You need to authenticate first.
+        "403":
+          description: No permission to access resource for a given action.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                AccessDenied:
+                  summary: Access Denied Error
+                  value:
+                    code: FORBIDDEN
+                    message: You do not have permission to access this resource.
+        "404":
+          description: The server can not find the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                AccessDenied:
+                  summary: Access Denied Error
+                  value:
+                    code: NOT FOUND
+                    message: I couldn't retrieve the specified `id`."
+        "500":
+          description: "Service unavailable. Please, try again later."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                InternalServerError:
+                  summary: Service unavailable.
+                  value:
+                    code: SERVICE UNAVAILABLE
+                    message: "Service unavailable. Please, try again later."
+      security:
+      - BearerAuth:
+        - Benchmark:retrieve
+    delete:
+      tags:
+      - Admin
+      summary: Delete a benchmark by ID
+      operationId: deleteBenchmark
+      parameters:
+      - name: id
+        in: path
+        description: The unique identifier of the resource.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+      responses:
+        "204":
+          description: Benchmark deleted successfully
+        "401":
+          description: The client must authenticate itself to get the requested response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                Unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: You need to authenticate first.
+        "403":
+          description: No permission to access resource for a given action.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                AccessDenied:
+                  summary: Access Denied Error
+                  value:
+                    code: FORBIDDEN
+                    message: You do not have permission to access this resource.
+        "404":
+          description: The server can not find the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                AccessDenied:
+                  summary: Access Denied Error
+                  value:
+                    code: NOT FOUND
+                    message: I couldn't retrieve the specified `id`."
+        "500":
+          description: "Service unavailable. Please, try again later."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                InternalServerError:
+                  summary: Service unavailable.
+                  value:
+                    code: SERVICE UNAVAILABLE
+                    message: "Service unavailable. Please, try again later."
+      security:
+      - BearerAuth:
+        - Benchmark:delete
+    patch:
+      tags:
+      - Admin
+      summary: Update a benchmark by ID
+      operationId: updateBenchmark
+      parameters:
+      - name: id
+        in: path
+        description: The unique identifier of the resource.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Benchmark"
+        required: true
+      responses:
+        "200":
+          description: Benchmark updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Benchmark"
+        "400":
+          description: The server cannot or will not process the request due to something
+            that is perceived to be a client error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                InvalidArgument:
+                  summary: Invalid Argument Error
+                  value:
+                    code: INVALID_ARGUMENT
+                    message: The 'location' field is required to be valid.
+                    details:
+                    - field: location
+                      issue: Must be a valid URI to GCS (gs://location/id) or a Hugging
+                        Face model ID (mistralai/Mistral-7B-v0.1).
+        "401":
+          description: The client must authenticate itself to get the requested response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                Unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: You need to authenticate first.
+        "403":
+          description: No permission to access resource for a given action.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                AccessDenied:
+                  summary: Access Denied Error
+                  value:
+                    code: FORBIDDEN
+                    message: You do not have permission to access this resource.
+        "404":
+          description: The server can not find the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                AccessDenied:
+                  summary: Access Denied Error
+                  value:
+                    code: NOT FOUND
+                    message: I couldn't retrieve the specified `id`."
+        "500":
+          description: "Service unavailable. Please, try again later."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                InternalServerError:
+                  summary: Service unavailable.
+                  value:
+                    code: SERVICE UNAVAILABLE
+                    message: "Service unavailable. Please, try again later."
+      security:
+      - BearerAuth:
+        - Benchmark:update
+  /datasets:
+    get:
+      tags:
+      - Dataset
+      summary: Retrieve all datasets
+      operationId: getAllDatasets
+      parameters:
+      - name: page
+        in: query
+        description: The page number to retrieve.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+          example: 1
+      - name: perPage
+        in: query
+        description: The number of items per page.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+          example: 10
+      responses:
+        "200":
+          description: A paginated list of datasets
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedDatasets"
+        "401":
+          description: The client must authenticate itself to get the requested response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                Unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: You need to authenticate first.
+        "403":
+          description: No permission to access resource for a given action.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                AccessDenied:
+                  summary: Access Denied Error
+                  value:
+                    code: FORBIDDEN
+                    message: You do not have permission to access this resource.
+        "500":
+          description: "Service unavailable. Please, try again later."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                InternalServerError:
+                  summary: Service unavailable.
+                  value:
+                    code: SERVICE UNAVAILABLE
+                    message: "Service unavailable. Please, try again later."
+      security:
+      - BearerAuth:
+        - Dataset:retrieve
+    post:
+      tags:
+      - Dataset
+      summary: Create a new dataset
+      operationId: createDataset
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Dataset"
+            examples:
+              CreateDatasetExample:
+                $ref: "#/components/examples/CreateDatasetExample"
+        required: true
+      responses:
+        "201":
+          description: Dataset created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dataset"
+        "400":
+          description: The server cannot or will not process the request due to something
+            that is perceived to be a client error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                InvalidArgument:
+                  summary: Invalid Argument Error
+                  value:
+                    code: INVALID_ARGUMENT
+                    message: The 'location' field is required to be valid.
+                    details:
+                    - field: location
+                      issue: Must be a valid URI to GCS (gs://location/id) or a Hugging
+                        Face model ID (mistralai/Mistral-7B-v0.1).
+        "401":
+          description: The client must authenticate itself to get the requested response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                Unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: You need to authenticate first.
+        "403":
+          description: No permission to access resource for a given action.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                AccessDenied:
+                  summary: Access Denied Error
+                  value:
+                    code: FORBIDDEN
+                    message: You do not have permission to access this resource.
+        "500":
+          description: "Service unavailable. Please, try again later."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                InternalServerError:
+                  summary: Service unavailable.
+                  value:
+                    code: SERVICE UNAVAILABLE
+                    message: "Service unavailable. Please, try again later."
+      security:
+      - BearerAuth:
+        - Dataset:create
+  /datasets/{id}:
+    get:
+      tags:
+      - Dataset
+      summary: Retrieve a dataset by ID
+      operationId: getDatasetById
+      parameters:
+      - name: id
+        in: path
+        description: The unique identifier of the resource.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+      responses:
+        "200":
+          description: A single dataset
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dataset"
+        "401":
+          description: The client must authenticate itself to get the requested response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                Unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: You need to authenticate first.
+        "403":
+          description: No permission to access resource for a given action.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                AccessDenied:
+                  summary: Access Denied Error
+                  value:
+                    code: FORBIDDEN
+                    message: You do not have permission to access this resource.
+        "404":
+          description: The server can not find the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                AccessDenied:
+                  summary: Access Denied Error
+                  value:
+                    code: NOT FOUND
+                    message: I couldn't retrieve the specified `id`."
+        "500":
+          description: "Service unavailable. Please, try again later."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                InternalServerError:
+                  summary: Service unavailable.
+                  value:
+                    code: SERVICE UNAVAILABLE
+                    message: "Service unavailable. Please, try again later."
+      security:
+      - BearerAuth:
+        - Dataset:retrieve
+    delete:
+      tags:
+      - Dataset
+      summary: Delete a dataset by ID
+      operationId: deleteDataset
+      parameters:
+      - name: id
+        in: path
+        description: The unique identifier of the resource.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+      responses:
+        "204":
+          description: Dataset deleted successfully
+        "401":
+          description: The client must authenticate itself to get the requested response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                Unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: You need to authenticate first.
+        "403":
+          description: No permission to access resource for a given action.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                AccessDenied:
+                  summary: Access Denied Error
+                  value:
+                    code: FORBIDDEN
+                    message: You do not have permission to access this resource.
+        "404":
+          description: The server can not find the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                AccessDenied:
+                  summary: Access Denied Error
+                  value:
+                    code: NOT FOUND
+                    message: I couldn't retrieve the specified `id`."
+        "500":
+          description: "Service unavailable. Please, try again later."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                InternalServerError:
+                  summary: Service unavailable.
+                  value:
+                    code: SERVICE UNAVAILABLE
+                    message: "Service unavailable. Please, try again later."
+      security:
+      - BearerAuth:
+        - Dataset:delete
+    patch:
+      tags:
+      - Dataset
+      summary: Update a dataset by ID
+      operationId: updateDataset
+      parameters:
+      - name: id
+        in: path
+        description: The unique identifier of the resource.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Dataset"
+        required: true
+      responses:
+        "200":
+          description: Dataset updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Dataset"
+        "400":
+          description: The server cannot or will not process the request due to something
+            that is perceived to be a client error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                InvalidArgument:
+                  summary: Invalid Argument Error
+                  value:
+                    code: INVALID_ARGUMENT
+                    message: The 'location' field is required to be valid.
+                    details:
+                    - field: location
+                      issue: Must be a valid URI to GCS (gs://location/id) or a Hugging
+                        Face model ID (mistralai/Mistral-7B-v0.1).
+        "401":
+          description: The client must authenticate itself to get the requested response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                Unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: You need to authenticate first.
+        "403":
+          description: No permission to access resource for a given action.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                AccessDenied:
+                  summary: Access Denied Error
+                  value:
+                    code: FORBIDDEN
+                    message: You do not have permission to access this resource.
+        "404":
+          description: The server can not find the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                AccessDenied:
+                  summary: Access Denied Error
+                  value:
+                    code: NOT FOUND
+                    message: I couldn't retrieve the specified `id`."
+        "500":
+          description: "Service unavailable. Please, try again later."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                InternalServerError:
+                  summary: Service unavailable.
+                  value:
+                    code: SERVICE UNAVAILABLE
+                    message: "Service unavailable. Please, try again later."
+      security:
+      - BearerAuth:
+        - Dataset:update
+  /trainings:
+    get:
+      tags:
+      - Training
+      summary: Retrieve all training jobs
+      operationId: getAllTrainings
+      parameters:
+      - name: page
+        in: query
+        description: The page number to retrieve.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+          example: 1
+      - name: perPage
+        in: query
+        description: The number of items per page.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+          example: 10
+      responses:
+        "200":
+          description: A paginated list of training jobs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedTrainings"
+        "401":
+          description: The client must authenticate itself to get the requested response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                Unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: You need to authenticate first.
+        "403":
+          description: No permission to access resource for a given action.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                AccessDenied:
+                  summary: Access Denied Error
+                  value:
+                    code: FORBIDDEN
+                    message: You do not have permission to access this resource.
+        "500":
+          description: "Service unavailable. Please, try again later."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                InternalServerError:
+                  summary: Service unavailable.
+                  value:
+                    code: SERVICE UNAVAILABLE
+                    message: "Service unavailable. Please, try again later."
+      security:
+      - BearerAuth:
+        - Trainings:retrieve
+    post:
+      tags:
+      - Training
+      summary: Create a new training job
+      operationId: createTraining
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Training"
+            examples:
+              CreateTrainingExample:
+                $ref: "#/components/examples/CreateTrainingExample"
+        required: true
+      responses:
+        "201":
+          description: Training job created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Training"
+        "400":
+          description: The server cannot or will not process the request due to something
+            that is perceived to be a client error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                InvalidArgument:
+                  summary: Invalid Argument Error
+                  value:
+                    code: INVALID_ARGUMENT
+                    message: The 'location' field is required to be valid.
+                    details:
+                    - field: location
+                      issue: Must be a valid URI to GCS (gs://location/id) or a Hugging
+                        Face model ID (mistralai/Mistral-7B-v0.1).
+        "401":
+          description: The client must authenticate itself to get the requested response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                Unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: You need to authenticate first.
+        "403":
+          description: No permission to access resource for a given action.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                AccessDenied:
+                  summary: Access Denied Error
+                  value:
+                    code: FORBIDDEN
+                    message: You do not have permission to access this resource.
+        "500":
+          description: "Service unavailable. Please, try again later."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                InternalServerError:
+                  summary: Service unavailable.
+                  value:
+                    code: SERVICE UNAVAILABLE
+                    message: "Service unavailable. Please, try again later."
+      security:
+      - BearerAuth:
+        - Trainings:create
+  /trainings/{id}:
+    get:
+      tags:
+      - Training
+      summary: Retrieve a training job by ID
+      operationId: getTrainingById
+      parameters:
+      - name: id
+        in: path
+        description: The unique identifier of the resource.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+      responses:
+        "200":
+          description: A single training job
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Training"
+        "401":
+          description: The client must authenticate itself to get the requested response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                Unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: You need to authenticate first.
+        "403":
+          description: No permission to access resource for a given action.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                AccessDenied:
+                  summary: Access Denied Error
+                  value:
+                    code: FORBIDDEN
+                    message: You do not have permission to access this resource.
+        "404":
+          description: The server can not find the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                AccessDenied:
+                  summary: Access Denied Error
+                  value:
+                    code: NOT FOUND
+                    message: I couldn't retrieve the specified `id`."
+        "500":
+          description: "Service unavailable. Please, try again later."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                InternalServerError:
+                  summary: Service unavailable.
+                  value:
+                    code: SERVICE UNAVAILABLE
+                    message: "Service unavailable. Please, try again later."
+      security:
+      - BearerAuth:
+        - Trainings:retrieve
+    delete:
+      tags:
+      - Training
+      summary: Cancel a training job by ID
+      operationId: cancelTraining
+      parameters:
+      - name: id
+        in: path
+        description: The unique identifier of the resource.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+      responses:
+        "204":
+          description: Training job cancelled successfully
+        "401":
+          description: The client must authenticate itself to get the requested response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                Unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: You need to authenticate first.
+        "403":
+          description: No permission to access resource for a given action.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                AccessDenied:
+                  summary: Access Denied Error
+                  value:
+                    code: FORBIDDEN
+                    message: You do not have permission to access this resource.
+        "404":
+          description: The server can not find the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                AccessDenied:
+                  summary: Access Denied Error
+                  value:
+                    code: NOT FOUND
+                    message: I couldn't retrieve the specified `id`."
+        "500":
+          description: "Service unavailable. Please, try again later."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                InternalServerError:
+                  summary: Service unavailable.
+                  value:
+                    code: SERVICE UNAVAILABLE
+                    message: "Service unavailable. Please, try again later."
+      security:
+      - BearerAuth:
+        - Trainings:cancel
+  /evaluations:
+    get:
+      tags:
+      - Evaluation
+      summary: Retrieve all evaluation jobs
+      operationId: getAllEvaluations
+      parameters:
+      - name: page
+        in: query
+        description: The page number to retrieve.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+          example: 1
+      - name: perPage
+        in: query
+        description: The number of items per page.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+          example: 10
+      responses:
+        "200":
+          description: A paginated list of evaluation jobs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedEvaluations"
+        "401":
+          description: The client must authenticate itself to get the requested response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                Unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: You need to authenticate first.
+        "403":
+          description: No permission to access resource for a given action.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                AccessDenied:
+                  summary: Access Denied Error
+                  value:
+                    code: FORBIDDEN
+                    message: You do not have permission to access this resource.
+        "500":
+          description: "Service unavailable. Please, try again later."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                InternalServerError:
+                  summary: Service unavailable.
+                  value:
+                    code: SERVICE UNAVAILABLE
+                    message: "Service unavailable. Please, try again later."
+      security:
+      - BearerAuth:
+        - Evaluations:retrieve
+    post:
+      tags:
+      - Evaluation
+      summary: Create a new evaluation job
+      operationId: createEvaluation
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Evaluation"
+            examples:
+              CreateEvaluationExample:
+                $ref: "#/components/examples/CreateEvaluationExample"
+        required: true
+      responses:
+        "201":
+          description: Evaluation job created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Evaluation"
+        "400":
+          description: The server cannot or will not process the request due to something
+            that is perceived to be a client error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                InvalidArgument:
+                  summary: Invalid Argument Error
+                  value:
+                    code: INVALID_ARGUMENT
+                    message: The 'location' field is required to be valid.
+                    details:
+                    - field: location
+                      issue: Must be a valid URI to GCS (gs://location/id) or a Hugging
+                        Face model ID (mistralai/Mistral-7B-v0.1).
+        "401":
+          description: The client must authenticate itself to get the requested response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                Unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: You need to authenticate first.
+        "403":
+          description: No permission to access resource for a given action.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                AccessDenied:
+                  summary: Access Denied Error
+                  value:
+                    code: FORBIDDEN
+                    message: You do not have permission to access this resource.
+        "500":
+          description: "Service unavailable. Please, try again later."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                InternalServerError:
+                  summary: Service unavailable.
+                  value:
+                    code: SERVICE UNAVAILABLE
+                    message: "Service unavailable. Please, try again later."
+      security:
+      - BearerAuth:
+        - Evaluations:create
+  /evaluations/{id}:
+    get:
+      tags:
+      - Evaluation
+      summary: Retrieve an evaluation job by ID
+      operationId: getEvaluationById
+      parameters:
+      - name: id
+        in: path
+        description: The unique identifier of the resource.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+      responses:
+        "200":
+          description: A single evaluation job
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Evaluation"
+        "401":
+          description: The client must authenticate itself to get the requested response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                Unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: You need to authenticate first.
+        "403":
+          description: No permission to access resource for a given action.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                AccessDenied:
+                  summary: Access Denied Error
+                  value:
+                    code: FORBIDDEN
+                    message: You do not have permission to access this resource.
+        "404":
+          description: The server can not find the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                AccessDenied:
+                  summary: Access Denied Error
+                  value:
+                    code: NOT FOUND
+                    message: I couldn't retrieve the specified `id`."
+        "500":
+          description: "Service unavailable. Please, try again later."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                InternalServerError:
+                  summary: Service unavailable.
+                  value:
+                    code: SERVICE UNAVAILABLE
+                    message: "Service unavailable. Please, try again later."
+      security:
+      - BearerAuth:
+        - Evaluations:retrieve
+    delete:
+      tags:
+      - Evaluation
+      summary: Cancel an evaluation job by ID
+      operationId: cancelEvaluation
+      parameters:
+      - name: id
+        in: path
+        description: The unique identifier of the resource.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+      responses:
+        "204":
+          description: Evaluation job cancelled successfully
+        "401":
+          description: The client must authenticate itself to get the requested response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                Unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: You need to authenticate first.
+        "403":
+          description: No permission to access resource for a given action.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                AccessDenied:
+                  summary: Access Denied Error
+                  value:
+                    code: FORBIDDEN
+                    message: You do not have permission to access this resource.
+        "404":
+          description: The server can not find the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                AccessDenied:
+                  summary: Access Denied Error
+                  value:
+                    code: NOT FOUND
+                    message: I couldn't retrieve the specified `id`."
+        "500":
+          description: "Service unavailable. Please, try again later."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                InternalServerError:
+                  summary: Service unavailable.
+                  value:
+                    code: SERVICE UNAVAILABLE
+                    message: "Service unavailable. Please, try again later."
+      security:
+      - BearerAuth:
+        - Evaluations:cancel
+  /inferences:
+    get:
+      tags:
+      - Inference
+      summary: Retrieve all inference jobs
+      operationId: getAllInferences
+      parameters:
+      - name: page
+        in: query
+        description: The page number to retrieve.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+          example: 1
+      - name: perPage
+        in: query
+        description: The number of items per page.
+        required: false
+        style: form
+        explode: true
+        schema:
+          type: integer
+          example: 10
+      responses:
+        "200":
+          description: A paginated list of inference jobs
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PaginatedInferences"
+        "401":
+          description: The client must authenticate itself to get the requested response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                Unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: You need to authenticate first.
+        "403":
+          description: No permission to access resource for a given action.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                AccessDenied:
+                  summary: Access Denied Error
+                  value:
+                    code: FORBIDDEN
+                    message: You do not have permission to access this resource.
+        "500":
+          description: "Service unavailable. Please, try again later."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                InternalServerError:
+                  summary: Service unavailable.
+                  value:
+                    code: SERVICE UNAVAILABLE
+                    message: "Service unavailable. Please, try again later."
+      security:
+      - BearerAuth:
+        - Inferences:retrieve
+    post:
+      tags:
+      - Inference
+      summary: Create a new inference job
+      operationId: createInference
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Inference"
+            examples:
+              CreateInferenceExample:
+                $ref: "#/components/examples/CreateInferenceExample"
+        required: true
+      responses:
+        "201":
+          description: Inference job created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Inference"
+        "400":
+          description: The server cannot or will not process the request due to something
+            that is perceived to be a client error.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                InvalidArgument:
+                  summary: Invalid Argument Error
+                  value:
+                    code: INVALID_ARGUMENT
+                    message: The 'location' field is required to be valid.
+                    details:
+                    - field: location
+                      issue: Must be a valid URI to GCS (gs://location/id) or a Hugging
+                        Face model ID (mistralai/Mistral-7B-v0.1).
+        "401":
+          description: The client must authenticate itself to get the requested response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                Unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: You need to authenticate first.
+        "403":
+          description: No permission to access resource for a given action.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                AccessDenied:
+                  summary: Access Denied Error
+                  value:
+                    code: FORBIDDEN
+                    message: You do not have permission to access this resource.
+        "500":
+          description: "Service unavailable. Please, try again later."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                InternalServerError:
+                  summary: Service unavailable.
+                  value:
+                    code: SERVICE UNAVAILABLE
+                    message: "Service unavailable. Please, try again later."
+      security:
+      - BearerAuth:
+        - Inferences:create
+  /inferences/{id}:
+    get:
+      tags:
+      - Inference
+      summary: Retrieve an inference job by ID
+      operationId: getInferenceById
+      parameters:
+      - name: id
+        in: path
+        description: The unique identifier of the resource.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+      responses:
+        "200":
+          description: A single inference job
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Inference"
+        "401":
+          description: The client must authenticate itself to get the requested response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                Unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: You need to authenticate first.
+        "403":
+          description: No permission to access resource for a given action.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                AccessDenied:
+                  summary: Access Denied Error
+                  value:
+                    code: FORBIDDEN
+                    message: You do not have permission to access this resource.
+        "404":
+          description: The server can not find the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                AccessDenied:
+                  summary: Access Denied Error
+                  value:
+                    code: NOT FOUND
+                    message: I couldn't retrieve the specified `id`."
+        "500":
+          description: "Service unavailable. Please, try again later."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                InternalServerError:
+                  summary: Service unavailable.
+                  value:
+                    code: SERVICE UNAVAILABLE
+                    message: "Service unavailable. Please, try again later."
+      security:
+      - BearerAuth:
+        - Inferences:retrieve
+    delete:
+      tags:
+      - Inference
+      summary: Cancel an inference job by ID
+      operationId: cancelInference
+      parameters:
+      - name: id
+        in: path
+        description: The unique identifier of the resource.
+        required: true
+        style: simple
+        explode: false
+        schema:
+          type: string
+          format: uuid
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+      responses:
+        "204":
+          description: Inference job cancelled successfully
+        "401":
+          description: The client must authenticate itself to get the requested response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                Unauthorized:
+                  value:
+                    code: UNAUTHORIZED
+                    message: You need to authenticate first.
+        "403":
+          description: No permission to access resource for a given action.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                AccessDenied:
+                  summary: Access Denied Error
+                  value:
+                    code: FORBIDDEN
+                    message: You do not have permission to access this resource.
+        "404":
+          description: The server can not find the requested resource.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                AccessDenied:
+                  summary: Access Denied Error
+                  value:
+                    code: NOT FOUND
+                    message: I couldn't retrieve the specified `id`."
+        "500":
+          description: "Service unavailable. Please, try again later."
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+              examples:
+                InternalServerError:
+                  summary: Service unavailable.
+                  value:
+                    code: SERVICE UNAVAILABLE
+                    message: "Service unavailable. Please, try again later."
+      security:
+      - BearerAuth:
+        - Inferences:cancel
+components:
+  schemas:
+    HardwareRequirements:
+      type: object
+      properties:
+        train:
+          $ref: "#/components/schemas/MachineConfig"
+        inference:
+          $ref: "#/components/schemas/MachineConfig"
+      description: The hardware requirements for a given task.
+      example:
+        inference: null
+        train:
+          diskGb: 100
+          gpu:
+            count: 1
+            gpuType: nvidia-tesla-t4
+          machineType: n1-standard-4
+    MachineConfig:
+      type: object
+      properties:
+        machineType:
+          type: string
+          description: The type of machine to use.
+          example: n1-standard-4
+        diskGb:
+          type: integer
+          description: The size of the disk in GB.
+          format: int32
+          example: 100
+        gpu:
+          $ref: "#/components/schemas/Gpu"
+      description: The machine configuration for a specific task.
+      example:
+        diskGb: 100
+        gpu:
+          count: 1
+          gpuType: nvidia-tesla-t4
+        machineType: n1-standard-4
+    Gpu:
+      type: object
+      properties:
+        gpuType:
+          type: string
+          description: The type of GPU.
+          example: nvidia-tesla-t4
+          enum:
+          - nvidia-tesla-t4
+          - nvidia-tesla-v100
+          - nvidia-tesla-a100
+        count:
+          type: integer
+          description: The number of GPUs to attach.
+          format: int32
+          example: 1
+      description: The GPU configuration.
+      example:
+        count: 1
+        gpuType: nvidia-tesla-t4
+    JobStatus:
+      type: string
+      description: The status of an asynchronous job.
+      example: in_progress
+      enum:
+      - waiting
+      - in_progress
+      - done
+      - failed
+      - cancelled
+    Error:
+      type: object
+      properties:
+        code:
+          type: string
+          description: A machine-readable error code.
+          example: INVALID_ARGUMENT
+        message:
+          type: string
+          description: A human-readable error message.
+          example: The 'location' field is required.
+        details:
+          type: array
+          items:
+            $ref: "#/components/schemas/Error_details"
+    Model:
+      required:
+      - location
+      - name
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier for the model.
+          format: uuid
+          readOnly: true
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+        name:
+          type: string
+          description: A human-readable name for the model.
+          example: ResNet-50 Image Classifier
+        location:
+          type: string
+          description: The cloud storage location of the model artifacts.
+          format: uri
+          example: gs://my-bucket/models/resnet50/
+        hardwareRequirements:
+          $ref: "#/components/schemas/HardwareRequirements"
+      example:
+        name: ResNet-50 Image Classifier
+        location: gs://my-bucket/models/resnet50/
+        id: f47ac10b-58cc-4372-a567-0e02b2c3d479
+        hardwareRequirements:
+          inference: null
+          train:
+            diskGb: 100
+            gpu:
+              count: 1
+              gpuType: nvidia-tesla-t4
+            machineType: n1-standard-4
+    Benchmark:
+      required:
+      - image
+      - name
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier for the benchmark.
+          format: uuid
+          readOnly: true
+          example: a68b148e-324f-4a7d-8f9f-7b7d7d3d2c9b
+        name:
+          type: string
+          description: A human-readable name for the benchmark.
+          example: GLUE Benchmark Suite
+        image:
+          type: string
+          description: The URI of the container image for running the benchmark.
+          format: uri
+          example: gcr.io/my-project/glue-benchmark:latest
+        hardwareRequirements:
+          $ref: "#/components/schemas/MachineConfig"
+        env:
+          type: object
+          additionalProperties:
+            type: string
+          description: Environment variables to set in the container.
+          example:
+            BENCHMARK_VERSION: "2.1"
+      example:
+        image: gcr.io/my-project/glue-benchmark:latest
+        name: GLUE Benchmark Suite
+        id: a68b148e-324f-4a7d-8f9f-7b7d7d3d2c9b
+        hardwareRequirements:
+          diskGb: 100
+          gpu:
+            count: 1
+            gpuType: nvidia-tesla-t4
+          machineType: n1-standard-4
+        env:
+          BENCHMARK_VERSION: "2.1"
+    Dataset:
+      required:
+      - location
+      - name
+      - purpose
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier for the dataset.
+          format: uuid
+          readOnly: true
+        name:
+          type: string
+          description: A human-readable name for the dataset.
+          example: ImageNet Training Data
+        purpose:
+          type: string
+          description: The intended use of the dataset.
+          example: train
+          enum:
+          - inference
+          - train
+          - test
+          - validation
+        location:
+          type: string
+          description: The cloud storage location of the dataset.
+          format: uri
+          example: gs://my-bucket/datasets/imagenet/train/
+      example:
+        purpose: train
+        name: ImageNet Training Data
+        location: gs://my-bucket/datasets/imagenet/train/
+        id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+    Training:
+      required:
+      - datasetId
+      - method
+      - modelId
+      - outputLocation
+      - outputModelId
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier for the training job.
+          format: uuid
+          readOnly: true
+          example: 1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d
+        method:
+          type: string
+          description: The training method to use.
+          example: sft
+          enum:
+          - sft
+          - dpo
+          - reinforcement
+        params:
+          type: object
+          additionalProperties: true
+          description: Hyperparameters for the training job.
+          example:
+            learning_rate: 0.001
+            epochs: 3
+        datasetId:
+          type: string
+          description: The ID of the dataset used for training.
+          format: uuid
+        modelId:
+          type: string
+          description: The ID of the base model to train.
+          format: uuid
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+        outputModelId:
+          type: string
+          description: The ID to assign to the new model created by this training
+            job.
+          example: FineTuned-ResNet50
+        outputLocation:
+          type: string
+          description: The cloud storage location for the output model artifacts.
+          format: uri
+          example: gs://my-bucket/models/FineTuned-ResNet50/
+        status:
+          $ref: "#/components/schemas/JobStatus"
+        hardwareRequirements:
+          $ref: "#/components/schemas/MachineConfig"
+      example:
+        outputLocation: gs://my-bucket/models/FineTuned-ResNet50/
+        method: sft
+        modelId: f47ac10b-58cc-4372-a567-0e02b2c3d479
+        datasetId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        id: 1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d
+        params:
+          learning_rate: 0.001
+          epochs: 3
+        hardwareRequirements:
+          diskGb: 100
+          gpu:
+            count: 1
+            gpuType: nvidia-tesla-t4
+          machineType: n1-standard-4
+        outputModelId: FineTuned-ResNet50
+        status: in_progress
+    Evaluation:
+      required:
+      - benchmarkIds
+      - modelId
+      - outputLocation
+      - status
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier for the evaluation job.
+          format: uuid
+          readOnly: true
+          example: 9f8e7d6c-5b4a-3c2d-1e0f-9a8b7c6d5e4f
+        benchmarkJobIds:
+          type: array
+          description: A list of benchmark IDs to use for the evaluation.
+          example:
+          - a68b148e-324f-4a7d-8f9f-7b7d7d3d2c9b
+          - e5a9c1b8-3d7e-4b2f-8a9c-1b2c3d4e5f6a
+          items:
+            type: string
+            format: uuid
+        modelId:
+          type: string
+          description: The ID of the model to evaluate.
+          format: uuid
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+        params:
+          type: object
+          additionalProperties: true
+          description: Parameters for the evaluation job.
+          example:
+            batch_size: 32
+        outputLocation:
+          type: string
+          description: The cloud storage location for the evaluation results.
+          format: uri
+          example: gs://my-bucket/evaluations/results/
+        status:
+          $ref: "#/components/schemas/JobStatus"
+        hardwareRequirements:
+          $ref: "#/components/schemas/MachineConfig"
+      description: Defines an evaluation job for a given model against one or more
+        benchmarks. The job is considered 'done' only after all associated benchmark
+        tests have completed.
+      example:
+        outputLocation: gs://my-bucket/evaluations/results/
+        benchmarkJobIds:
+        - a68b148e-324f-4a7d-8f9f-7b7d7d3d2c9b
+        - e5a9c1b8-3d7e-4b2f-8a9c-1b2c3d4e5f6a
+        modelId: f47ac10b-58cc-4372-a567-0e02b2c3d479
+        id: 9f8e7d6c-5b4a-3c2d-1e0f-9a8b7c6d5e4f
+        params:
+          batch_size: 32
+        hardwareRequirements:
+          diskGb: 100
+          gpu:
+            count: 1
+            gpuType: nvidia-tesla-t4
+          machineType: n1-standard-4
+        status: in_progress
+    Inference:
+      required:
+      - inputLocation
+      - modelId
+      - outputLocation
+      type: object
+      properties:
+        id:
+          type: string
+          description: The unique identifier for the inference job.
+          format: uuid
+          readOnly: true
+          example: 7c6b5a4d-3e2f-1c0b-9a8d-7e6f5a4b3c2d
+        modelId:
+          type: string
+          description: The ID of the model to use for inference.
+          format: uuid
+          example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+        inputLocation:
+          type: string
+          description: The cloud storage location of the input data.
+          format: uri
+          example: gs://my-bucket/inference/input/batch1.jsonl
+        outputLocation:
+          type: string
+          description: The cloud storage location for the inference output.
+          format: uri
+          example: gs://my-bucket/inference/output/batch1_results.jsonl
+        params:
+          type: object
+          additionalProperties: true
+          description: Parameters for the inference job.
+          example:
+            temperature: 0.7
+        status:
+          $ref: "#/components/schemas/JobStatus"
+      example:
+        outputLocation: gs://my-bucket/inference/output/batch1_results.jsonl
+        inputLocation: gs://my-bucket/inference/input/batch1.jsonl
+        modelId: f47ac10b-58cc-4372-a567-0e02b2c3d479
+        id: 7c6b5a4d-3e2f-1c0b-9a8d-7e6f5a4b3c2d
+        params:
+          temperature: 0.7
+        status: in_progress
+    PaginatedModels:
+      type: object
+      properties:
+        total:
+          type: integer
+          example: 42
+        page:
+          type: integer
+          example: 1
+        perPage:
+          type: integer
+          example: 10
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Model"
+      example:
+        total: 42
+        perPage: 10
+        page: 1
+        items:
+        - name: ResNet-50 Image Classifier
+          location: gs://my-bucket/models/resnet50/
+          id: f47ac10b-58cc-4372-a567-0e02b2c3d479
+          hardwareRequirements:
+            inference: null
+            train:
+              diskGb: 100
+              gpu:
+                count: 1
+                gpuType: nvidia-tesla-t4
+              machineType: n1-standard-4
+        - name: ResNet-50 Image Classifier
+          location: gs://my-bucket/models/resnet50/
+          id: f47ac10b-58cc-4372-a567-0e02b2c3d479
+          hardwareRequirements:
+            inference: null
+            train:
+              diskGb: 100
+              gpu:
+                count: 1
+                gpuType: nvidia-tesla-t4
+              machineType: n1-standard-4
+    PaginatedBenchmarks:
+      type: object
+      properties:
+        total:
+          type: integer
+          example: 15
+        page:
+          type: integer
+          example: 1
+        perPage:
+          type: integer
+          example: 10
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Benchmark"
+      example:
+        total: 15
+        perPage: 10
+        page: 1
+        items:
+        - image: gcr.io/my-project/glue-benchmark:latest
+          name: GLUE Benchmark Suite
+          id: a68b148e-324f-4a7d-8f9f-7b7d7d3d2c9b
+          hardwareRequirements:
+            diskGb: 100
+            gpu:
+              count: 1
+              gpuType: nvidia-tesla-t4
+            machineType: n1-standard-4
+          env:
+            BENCHMARK_VERSION: "2.1"
+        - image: gcr.io/my-project/glue-benchmark:latest
+          name: GLUE Benchmark Suite
+          id: a68b148e-324f-4a7d-8f9f-7b7d7d3d2c9b
+          hardwareRequirements:
+            diskGb: 100
+            gpu:
+              count: 1
+              gpuType: nvidia-tesla-t4
+            machineType: n1-standard-4
+          env:
+            BENCHMARK_VERSION: "2.1"
+    PaginatedDatasets:
+      type: object
+      properties:
+        total:
+          type: integer
+          example: 120
+        page:
+          type: integer
+          example: 1
+        perPage:
+          type: integer
+          example: 10
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Dataset"
+      example:
+        total: 120
+        perPage: 10
+        page: 1
+        items:
+        - purpose: train
+          name: ImageNet Training Data
+          location: gs://my-bucket/datasets/imagenet/train/
+          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+        - purpose: train
+          name: ImageNet Training Data
+          location: gs://my-bucket/datasets/imagenet/train/
+          id: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+    PaginatedTrainings:
+      type: object
+      properties:
+        total:
+          type: integer
+          example: 33
+        page:
+          type: integer
+          example: 1
+        perPage:
+          type: integer
+          example: 10
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Training"
+      example:
+        total: 33
+        perPage: 10
+        page: 1
+        items:
+        - outputLocation: gs://my-bucket/models/FineTuned-ResNet50/
+          method: sft
+          modelId: f47ac10b-58cc-4372-a567-0e02b2c3d479
+          datasetId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          id: 1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d
+          params:
+            learning_rate: 0.001
+            epochs: 3
+          hardwareRequirements:
+            diskGb: 100
+            gpu:
+              count: 1
+              gpuType: nvidia-tesla-t4
+            machineType: n1-standard-4
+          outputModelId: FineTuned-ResNet50
+          status: in_progress
+        - outputLocation: gs://my-bucket/models/FineTuned-ResNet50/
+          method: sft
+          modelId: f47ac10b-58cc-4372-a567-0e02b2c3d479
+          datasetId: 046b6c7f-0b8a-43b9-b35d-6489e6daee91
+          id: 1a2b3c4d-5e6f-7a8b-9c0d-1e2f3a4b5c6d
+          params:
+            learning_rate: 0.001
+            epochs: 3
+          hardwareRequirements:
+            diskGb: 100
+            gpu:
+              count: 1
+              gpuType: nvidia-tesla-t4
+            machineType: n1-standard-4
+          outputModelId: FineTuned-ResNet50
+          status: in_progress
+    PaginatedEvaluations:
+      type: object
+      properties:
+        total:
+          type: integer
+          example: 50
+        page:
+          type: integer
+          example: 1
+        perPage:
+          type: integer
+          example: 10
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Evaluation"
+      example:
+        total: 50
+        perPage: 10
+        page: 1
+        items:
+        - outputLocation: gs://my-bucket/evaluations/results/
+          benchmarkJobIds:
+          - a68b148e-324f-4a7d-8f9f-7b7d7d3d2c9b
+          - e5a9c1b8-3d7e-4b2f-8a9c-1b2c3d4e5f6a
+          modelId: f47ac10b-58cc-4372-a567-0e02b2c3d479
+          id: 9f8e7d6c-5b4a-3c2d-1e0f-9a8b7c6d5e4f
+          params:
+            batch_size: 32
+          hardwareRequirements:
+            diskGb: 100
+            gpu:
+              count: 1
+              gpuType: nvidia-tesla-t4
+            machineType: n1-standard-4
+          status: in_progress
+        - outputLocation: gs://my-bucket/evaluations/results/
+          benchmarkJobIds:
+          - a68b148e-324f-4a7d-8f9f-7b7d7d3d2c9b
+          - e5a9c1b8-3d7e-4b2f-8a9c-1b2c3d4e5f6a
+          modelId: f47ac10b-58cc-4372-a567-0e02b2c3d479
+          id: 9f8e7d6c-5b4a-3c2d-1e0f-9a8b7c6d5e4f
+          params:
+            batch_size: 32
+          hardwareRequirements:
+            diskGb: 100
+            gpu:
+              count: 1
+              gpuType: nvidia-tesla-t4
+            machineType: n1-standard-4
+          status: in_progress
+    PaginatedInferences:
+      type: object
+      properties:
+        total:
+          type: integer
+          example: 254
+        page:
+          type: integer
+          example: 1
+        perPage:
+          type: integer
+          example: 10
+        items:
+          type: array
+          items:
+            $ref: "#/components/schemas/Inference"
+      example:
+        total: 254
+        perPage: 10
+        page: 1
+        items:
+        - outputLocation: gs://my-bucket/inference/output/batch1_results.jsonl
+          inputLocation: gs://my-bucket/inference/input/batch1.jsonl
+          modelId: f47ac10b-58cc-4372-a567-0e02b2c3d479
+          id: 7c6b5a4d-3e2f-1c0b-9a8d-7e6f5a4b3c2d
+          params:
+            temperature: 0.7
+          status: in_progress
+        - outputLocation: gs://my-bucket/inference/output/batch1_results.jsonl
+          inputLocation: gs://my-bucket/inference/input/batch1.jsonl
+          modelId: f47ac10b-58cc-4372-a567-0e02b2c3d479
+          id: 7c6b5a4d-3e2f-1c0b-9a8d-7e6f5a4b3c2d
+          params:
+            temperature: 0.7
+          status: in_progress
+    oauth2_token_body:
+      type: object
+      properties:
+        grant_type:
+          type: string
+          description: The grant type.
+          example: client_credentials
+        client_id:
+          type: string
+          description: Your client ID.
+        client_secret:
+          type: string
+          description: Your client secret.
+        scope:
+          type: string
+          description: A space-delimited list of scopes.
+          example: Model:create Model:retrieve
+    inline_response_200:
+      type: object
+      properties:
+        access_token:
+          type: string
+          example: eyJhbGciOiJSUzI1NiIsImtpZCI6IjEifQ...
+        token_type:
+          type: string
+          example: Bearer
+        expires_in:
+          type: integer
+          example: 3600
+        scope:
+          type: string
+          example: Model:create Model:retrieve
+      example:
+        access_token: eyJhbGciOiJSUzI1NiIsImtpZCI6IjEifQ...
+        scope: Model:create Model:retrieve
+        token_type: Bearer
+        expires_in: 3600
+    Error_details:
+      type: object
+      properties:
+        field:
+          type: string
+          example: location
+        issue:
+          type: string
+          example: Must be a valid URI.
+  responses:
+    BadRequest:
+      description: The server cannot or will not process the request due to something
+        that is perceived to be a client error.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          examples:
+            InvalidArgument:
+              summary: Invalid Argument Error
+              value:
+                code: INVALID_ARGUMENT
+                message: The 'location' field is required to be valid.
+                details:
+                - field: location
+                  issue: Must be a valid URI to GCS (gs://location/id) or a Hugging
+                    Face model ID (mistralai/Mistral-7B-v0.1).
+    Unauthorized:
+      description: The client must authenticate itself to get the requested response.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          examples:
+            Unauthorized:
+              value:
+                code: UNAUTHORIZED
+                message: You need to authenticate first.
+    Forbidden:
+      description: No permission to access resource for a given action.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          examples:
+            AccessDenied:
+              summary: Access Denied Error
+              value:
+                code: FORBIDDEN
+                message: You do not have permission to access this resource.
+    NotFound:
+      description: The server can not find the requested resource.
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          examples:
+            AccessDenied:
+              summary: Access Denied Error
+              value:
+                code: NOT FOUND
+                message: I couldn't retrieve the specified `id`."
+    InternalServerError:
+      description: "Service unavailable. Please, try again later."
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          examples:
+            InternalServerError:
+              summary: Service unavailable.
+              value:
+                code: SERVICE UNAVAILABLE
+                message: "Service unavailable. Please, try again later."
+  parameters:
+    Id:
+      name: id
+      in: path
+      description: The unique identifier of the resource.
+      required: true
+      style: simple
+      explode: false
+      schema:
+        type: string
+        format: uuid
+        example: f47ac10b-58cc-4372-a567-0e02b2c3d479
+  examples:
+    CreateModelExample:
+      summary: An example of a request to create a new model.
+      value:
+        name: BERT-base-uncased
+        location: gs://my-ml-project/models/bert-base/
+        hardwareRequirements:
+          train:
+            machineType: a2-highgpu-1g
+            diskGb: 200
+            gpu:
+              gpuType: nvidia-tesla-a100
+              count: 1
+          inference:
+            machineType: n1-standard-8
+            diskGb: 50
+            gpu:
+              gpuType: nvidia-tesla-t4
+              count: 1
+    CreateBenchmarkExample:
+      summary: An example request to create a new benchmark.
+      value:
+        name: HumanEval
+        image: gcr.io/my-project/human-eval-runner:1.2.0
+        hardwareRequirements:
+          machineType: n1-standard-4
+          diskGb: 50
+        env:
+          TIMEOUT: "60"
+    CreateDatasetExample:
+      summary: An example request to create a new dataset.
+      value:
+        name: SQuAD v2 - Validation
+        purpose: validation
+        location: gs://my-datasets/squad/validation_v2/
+    CreateTrainingExample:
+      summary: An example request to create a new training job.
+      value:
+        method: sft
+        modelId: f47ac10b-58cc-4372-a567-0e02b2c3d479
+        outputModelId: FineTuned-BERT-SQuAD
+        outputLocation: gs://my-ml-project/models/bert-squad-finetuned/
+        datasetId: c2d3e4f5-6a7b-8c9d-0e1f2a3b4c5d
+        params:
+          learning_rate: 5.0E-5
+          num_train_epochs: 2
+          per_device_train_batch_size: 16
+    CreateEvaluationExample:
+      summary: An example request to create a new evaluation job.
+      value:
+        benchmarkIds:
+        - a68b148e-324f-4a7d-8f9f-7b7d7d3d2c9b
+        - e5a9c1b8-3d7e-4b2f-8a9c-1b2c3d4e5f6a
+        modelId: f47ac10b-58cc-4372-a567-0e02b2c3d479
+        outputLocation: gs://my-ml-project/evaluations/bert-multi-benchmark-results/
+        params:
+          split: validation
+    CreateInferenceExample:
+      summary: An example request to create a new inference job.
+      value:
+        modelId: f47ac10b-58cc-4372-a567-0e02b2c3d479
+        inputLocation: gs://my-ml-project/inference-data/prompts.jsonl
+        outputLocation: gs://my-ml-project/inference-results/generated-text.jsonl
+        params:
+          task: text-generation
+  securitySchemes:
+    BearerAuth:
+      type: oauth2
+      description: "Use this scheme to authenticate with your API key, sometimes also\
+        \ referred to as a Bearer token. The token will be sent in the `Authorization`\
+        \ header."
+      flows:
+        implicit:
+          authorizationUrl: https://api.example.com/oauth2/authorize
+          scopes:
+            Model:create: Create a new model
+            Model:retrieve: Retrieve models
+            Model:update: Update a model
+            Model:delete: Delete a model
+            Benchmark:create: Create a new benchmark
+            Benchmark:retrieve: Retrieve benchmarks
+            Benchmark:update: Update a benchmark
+            Benchmark:delete: Delete a benchmark
+            Dataset:create: Create a new dataset
+            Dataset:retrieve: Retrieve datasets
+            Dataset:update: Update a dataset
+            Dataset:delete: Delete a dataset
+            Trainings:create: Create a new training job
+            Trainings:retrieve: Retrieve training jobs
+            Trainings:cancel: Cancel a training job
+            Evaluations:create: Create a new evaluation job
+            Evaluations:retrieve: Retrieve evaluation jobs
+            Evaluations:cancel: Cancel an evaluation job
+            Inferences:create: Create a new inference job
+            Inferences:retrieve: Retrieve inference jobs
+            Inferences:cancel: Cancel an inference job
